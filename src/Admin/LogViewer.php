@@ -30,22 +30,7 @@ class LogViewer {
      * Initialize the log viewer
      */
     private function __construct() {
-        add_action('admin_menu', [$this, 'add_menu_item']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
-    }
-
-    /**
-     * Add menu item
-     */
-    public function add_menu_item() {
-        add_submenu_page(
-            'wpcc-settings',
-            __('System Logs', 'wp-custom-content'),
-            __('System Logs', 'wp-custom-content'),
-            'manage_options',
-            'wpcc-logs',
-            [$this, 'render_page']
-        );
     }
 
     /**

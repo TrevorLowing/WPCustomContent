@@ -297,7 +297,82 @@ class Settings {
      * Render integrations section
      */
     public function render_integrations_section() {
-        echo '<p>' . esc_html__('Configure optional integrations with other plugins.', 'wp-custom-content') . '</p>';
+        echo '<p>' . esc_html__('Configure integration settings with third-party plugins.', 'wp-custom-content') . '</p>';
+        
+        // Check plugin dependencies
+        $dependencies = $this->check_dependencies();
+        
+        echo '<div class="wpcc-dependencies">';
+        echo '<h4>' . esc_html__('Plugin Dependencies', 'wp-custom-content') . '</h4>';
+        echo '<table class="widefat" style="margin-bottom: 20px;">';
+        echo '<thead><tr>';
+        echo '<th>' . esc_html__('Plugin', 'wp-custom-content') . '</th>';
+        echo '<th>' . esc_html__('Status', 'wp-custom-content') . '</th>';
+        echo '<th>' . esc_html__('Required For', 'wp-custom-content') . '</th>';
+        echo '</tr></thead><tbody>';
+        
+        foreach ($dependencies as $plugin) {
+            $status_class = $plugin['active'] ? 'active' : 'inactive';
+            echo '<tr>';
+            echo '<td>' . esc_html($plugin['name']) . '</td>';
+            echo '<td><span class="wpcc-status ' . esc_attr($status_class) . '">' . 
+                 esc_html($plugin['active'] ? __('Active', 'wp-custom-content') : __('Not Installed/Inactive', 'wp-custom-content')) . 
+                 '</span></td>';
+            echo '<td>' . esc_html($plugin['required_for']) . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</tbody></table>';
+        echo '</div>';
+    }
+
+    /**
+     * Check plugin dependencies
+     * 
+     * @return array Array of dependencies and their status
+     */
+    private function check_dependencies() {
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        return [
+            [
+                'name' => 'Meta Box',
+                'active' => is_plugin_active('meta-box/meta-box.php'),
+                'required_for' => __('Required - Core functionality', 'wp-custom-content'),
+            ],
+            [
+                'name' => 'EmbedPress',
+                'active' => is_plugin_active('embedpress/embedpress.php'),
+                'required_for' => __('Optional - Enhanced media embedding', 'wp-custom-content'),
+            ],
+            [
+                'name' => 'PDF Embedder',
+                'active' => is_plugin_active('pdf-embedder/pdf-embedder.php'),
+                'required_for' => __('Optional - PDF document display', 'wp-custom-content'),
+            ],
+        ];
+    }
+
+    /**
+     * Check plugin installation and activation status
+     * 
+     * @param string $plugin_file Plugin file path relative to plugins directory
+     * @return array Status information
+     */
+    private function check_plugin_status($plugin_file) {
+        if (!function_exists('is_plugin_active')) {
+            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        $installed = file_exists(WP_PLUGIN_DIR . '/' . $plugin_file);
+        $active = is_plugin_active($plugin_file);
+
+        return [
+            'installed' => $installed,
+            'active' => $active
+        ];
     }
 
     /**
@@ -325,17 +400,55 @@ class Settings {
      * Render checkbox field
      */
     public function render_checkbox_field($args) {
-        $settings = get_option(self::OPTION_NAME, $this->defaults);
         $field = $args['field'];
-        ?>
-        <label>
-            <input type="checkbox" 
-                   name="<?php echo esc_attr(self::OPTION_NAME . '[' . $field . ']'); ?>"
-                   value="1"
-                   <?php checked(isset($settings[$field]) ? $settings[$field] : false); ?>>
-            <?php echo esc_html__('Enable', 'wp-custom-content'); ?>
-        </label>
-        <?php
+        $options = $this->get_options();
+        
+        // Check if this is an integration field
+        $is_integration = in_array($field, ['enable_embedpress', 'enable_pdf_embedder']);
+        $disabled = false;
+        $disabled_message = '';
+        $force_unchecked = false;
+        
+        if ($is_integration) {
+            // Get plugin file and status based on field
+            $plugin_file = $field === 'enable_embedpress' ? 'embedpress/embedpress.php' : 'pdf-embedder/pdf-embedder.php';
+            $plugin_name = $field === 'enable_embedpress' ? 'EmbedPress' : 'PDF Embedder';
+            $status = $this->check_plugin_status($plugin_file);
+
+            if (!$status['installed']) {
+                $disabled = true;
+                $force_unchecked = true;
+                $disabled_message = sprintf(
+                    __('%s plugin must be installed first', 'wp-custom-content'),
+                    $plugin_name
+                );
+            } elseif (!$status['active']) {
+                $disabled = true;
+                $force_unchecked = true;
+                $disabled_message = sprintf(
+                    __('%s plugin is installed but needs to be activated', 'wp-custom-content'),
+                    $plugin_name
+                );
+            }
+        }
+
+        // If plugin is not installed or not active, force the option to be false
+        if ($force_unchecked) {
+            $options[$field] = false;
+            update_option(self::OPTION_NAME, $options);
+        }
+
+        $value = isset($options[$field]) ? $options[$field] : false;
+
+        printf(
+            '<label><input type="checkbox" name="%s[%s]" value="1" %s %s> %s</label>%s',
+            esc_attr(self::OPTION_NAME),
+            esc_attr($field),
+            checked($value, true, false),
+            $disabled ? 'disabled="disabled"' : '',
+            esc_html__('Enable', 'wp-custom-content'),
+            $disabled_message ? '<p class="description" style="color: #dc3545;">' . esc_html($disabled_message) . '</p>' : ''
+        );
     }
 
     /**
@@ -485,57 +598,58 @@ class Settings {
      * Sanitize settings
      */
     public function sanitize_settings($input) {
-        $sanitized = [];
-
-        // Sanitize checkboxes
-        $checkboxes = ['enable_embedpress', 'enable_pdf_embedder', 'gpt_analysis_enabled', 'gpt_auto_analyze', 'enable_logging', 'enable_error_notifications'];
-        foreach ($checkboxes as $checkbox) {
-            $sanitized[$checkbox] = isset($input[$checkbox]) ? true : false;
+        if (!is_array($input)) {
+            return $this->defaults;
         }
 
-        // Sanitize text fields
-        if (isset($input['gpt_trainer_endpoint'])) {
-            $sanitized['gpt_trainer_endpoint'] = esc_url_raw($input['gpt_trainer_endpoint']);
+        $output = $this->get_options();
+
+        // Handle integration settings
+        $integrations = [
+            'enable_embedpress' => 'embedpress/embedpress.php',
+            'enable_pdf_embedder' => 'pdf-embedder/pdf-embedder.php'
+        ];
+
+        foreach ($integrations as $option => $plugin) {
+            if (isset($input[$option])) {
+                $status = $this->check_plugin_status($plugin);
+                if ($status['installed'] && $status['active']) {
+                    $output[$option] = (bool) $input[$option];
+                } else {
+                    $output[$option] = false;
+                }
+            } else {
+                $output[$option] = false;
+            }
         }
 
-        // Sanitize API key
-        if (isset($input['gpt_trainer_api_key'])) {
-            $sanitized['gpt_trainer_api_key'] = sanitize_text_field($input['gpt_trainer_api_key']);
+        // Handle other settings...
+        foreach ($input as $key => $value) {
+            if (!array_key_exists($key, $integrations)) {
+                $output[$key] = $this->sanitize_setting($key, $value);
+            }
         }
 
-        // Sanitize select fields
-        if (isset($input['gpt_model'])) {
-            $sanitized['gpt_model'] = sanitize_text_field($input['gpt_model']);
-        }
+        return $output;
+    }
 
-        if (isset($input['log_level'])) {
-            $sanitized['log_level'] = sanitize_text_field($input['log_level']);
+    /**
+     * Sanitize individual setting
+     */
+    private function sanitize_setting($key, $value) {
+        switch ($key) {
+            case 'gpt_trainer_api_key':
+            case 'gpt_trainer_endpoint':
+                return sanitize_text_field($value);
+            case 'gpt_temperature':
+                return floatval($value);
+            case 'log_retention_days':
+                return intval($value);
+            case 'notification_levels':
+                return is_array($value) ? array_map('sanitize_text_field', $value) : ['ERROR'];
+            default:
+                return (bool) $value;
         }
-
-        // Sanitize number fields
-        if (isset($input['gpt_temperature'])) {
-            $sanitized['gpt_temperature'] = floatval($input['gpt_temperature']);
-            if ($sanitized['gpt_temperature'] < 0) $sanitized['gpt_temperature'] = 0;
-            if ($sanitized['gpt_temperature'] > 1) $sanitized['gpt_temperature'] = 1;
-        }
-
-        if (isset($input['log_retention_days'])) {
-            $sanitized['log_retention_days'] = intval($input['log_retention_days']);
-            if ($sanitized['log_retention_days'] < 1) $sanitized['log_retention_days'] = 1;
-            if ($sanitized['log_retention_days'] > 365) $sanitized['log_retention_days'] = 365;
-        }
-
-        // Sanitize notification email
-        if (isset($input['notification_email'])) {
-            $sanitized['notification_email'] = sanitize_email($input['notification_email']);
-        }
-
-        // Sanitize notification levels
-        if (isset($input['notification_levels'])) {
-            $sanitized['notification_levels'] = array_map('sanitize_text_field', $input['notification_levels']);
-        }
-
-        return $sanitized;
     }
 
     /**
@@ -545,5 +659,14 @@ class Settings {
      */
     private function get_options() {
         return get_option(self::OPTION_NAME, $this->defaults);
+    }
+
+    /**
+     * Get all plugin options
+     *
+     * @return array Plugin options with defaults applied
+     */
+    public function get_all_options() {
+        return $this->get_options();
     }
 }

@@ -98,6 +98,16 @@
     border-bottom: 1px solid #eee;
 }
 
+/* Disabled settings */
+.wpcc-settings-wrap input[type="checkbox"]:disabled + span {
+    opacity: 0.5;
+}
+
+.wpcc-settings-wrap .description {
+    margin-top: 5px;
+    font-style: italic;
+}
+
 /* Tooltips */
 .wpcc-tooltip {
     position: relative;
@@ -165,6 +175,42 @@
 
 .wpcc-status-error {
     background-color: #dc3545;
+}
+
+/* Dependencies table styling */
+.wpcc-dependencies {
+    margin: 20px 0;
+}
+
+.wpcc-dependencies table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.wpcc-dependencies th {
+    text-align: left;
+    padding: 10px;
+}
+
+.wpcc-dependencies td {
+    padding: 10px;
+}
+
+.wpcc-status {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.wpcc-status.active {
+    background-color: #dff0d8;
+    color: #3c763d;
+}
+
+.wpcc-status.inactive {
+    background-color: #f2dede;
+    color: #a94442;
 }
 
 /* Responsive Design */

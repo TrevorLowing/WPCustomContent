@@ -68,6 +68,48 @@ A comprehensive WordPress content management plugin with GPT-powered analysis, a
 - Configure log levels
 - Set up email notifications
 
+## Plugin Dependencies
+
+### Required Dependencies
+- **Meta Box**: Required for custom fields and meta data management
+  - Must be installed and activated for core functionality
+
+### Optional Dependencies
+- **EmbedPress**: Enhances media embedding capabilities
+  - When installed and activated, enables advanced embedding features
+  - Integration can be enabled/disabled in plugin settings
+- **PDF Embedder**: Provides PDF document display functionality
+  - When installed and activated, enables PDF embedding features
+  - Integration can be enabled/disabled in plugin settings
+
+### Dependency Management
+The plugin includes smart dependency handling:
+- Automatically detects plugin installation and activation status
+- Prevents enabling features when required plugins are not ready
+- Provides clear guidance on required actions (install/activate)
+- Settings automatically sync with plugin status changes
+
+## Settings
+
+### Integration Settings
+The plugin provides integration settings for optional dependencies:
+
+1. **EmbedPress Integration**
+   - Enables enhanced media embedding features
+   - Requires EmbedPress plugin to be installed and activated
+   - Settings will be disabled if EmbedPress is not ready
+
+2. **PDF Embedder Integration**
+   - Enables PDF document display features
+   - Requires PDF Embedder plugin to be installed and activated
+   - Settings will be disabled if PDF Embedder is not ready
+
+### Settings Behavior
+- Settings are automatically validated against plugin availability
+- Integration options are disabled when plugins are not ready
+- Clear messages indicate required actions for each integration
+- Settings automatically update when plugin status changes
+
 ## Development
 
 ### Local Development Setup

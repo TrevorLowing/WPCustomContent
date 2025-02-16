@@ -31,26 +31,11 @@ class SystemStatus {
      */
     private function __construct() {
         $this->logger = Logger::get_instance();
-        add_action('admin_menu', [$this, 'add_menu_item']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('wp_ajax_wpcc_export_logs', [$this, 'export_logs']);
         add_action('wp_ajax_wpcc_export_settings', [$this, 'export_settings']);
         add_action('wp_ajax_wpcc_import_settings', [$this, 'import_settings']);
         add_action('wp_ajax_wpcc_run_diagnostics', [$this, 'run_diagnostics']);
-    }
-
-    /**
-     * Add menu item
-     */
-    public function add_menu_item() {
-        add_submenu_page(
-            'wpcc-settings',
-            __('System Status', 'wp-custom-content'),
-            __('System Status', 'wp-custom-content'),
-            'manage_options',
-            'wpcc-status',
-            [$this, 'render_page']
-        );
     }
 
     /**
@@ -135,7 +120,7 @@ class SystemStatus {
             </div>
 
             <div class="wpcc-status-section">
-                <h2><?php echo esc_html__('Plugin Status', 'wp-custom-content'); ?></h2>
+                <h2><?php echo esc_html__('Plugin Information', 'wp-custom-content'); ?></h2>
                 <table class="widefat" cellspacing="0">
                     <tbody>
                         <?php foreach ($system_info['plugin'] as $key => $value) : ?>
@@ -183,9 +168,9 @@ class SystemStatus {
             'plugin' => [
                 'Version' => WP_CUSTOM_CONTENT_VERSION,
                 'Database Version' => get_option('wpcc_db_version', 'Not Set'),
-                'Logging Enabled' => Settings::get_instance()->get_options()['enable_logging'] ? 'Yes' : 'No',
-                'Log Retention' => Settings::get_instance()->get_options()['log_retention_days'] . ' days',
-                'GPT Integration' => !empty(Settings::get_instance()->get_options()['gpt_trainer_api_key']) ? 'Configured' : 'Not Configured',
+                'Logging Enabled' => Settings::get_instance()->get_all_options()['enable_logging'] ? 'Yes' : 'No',
+                'Log Retention' => Settings::get_instance()->get_all_options()['log_retention_days'] . ' days',
+                'GPT Integration' => !empty(Settings::get_instance()->get_all_options()['gpt_trainer_api_key']) ? 'Configured' : 'Not Configured',
                 'Last Error' => $this->get_last_error(),
             ],
         ];
@@ -243,7 +228,7 @@ class SystemStatus {
             wp_die(-1);
         }
 
-        $settings = Settings::get_instance()->get_options();
+        $settings = Settings::get_instance()->get_all_options();
         $filename = 'wpcc-settings-' . date('Y-m-d') . '.json';
 
         header('Content-Type: application/json');
@@ -309,7 +294,7 @@ class SystemStatus {
         ];
 
         // Check API connectivity
-        $settings = Settings::get_instance()->get_options();
+        $settings = Settings::get_instance()->get_all_options();
         if (!empty($settings['gpt_trainer_api_key'])) {
             $response = wp_remote_get($settings['gpt_trainer_endpoint']);
             $results['api_connection'] = [

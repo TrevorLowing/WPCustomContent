@@ -18,7 +18,7 @@ namespace WPCustomContent\PostTypes;
 
 use WP_Error;
 use WPCustomContent\Admin\Settings;
-use WPCustomContent\Logger;
+use WPCustomContent\Logger\Logger;
 
 /**
  * Content Post Type class
