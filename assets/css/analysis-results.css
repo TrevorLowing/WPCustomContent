@@ -1,0 +1,126 @@
+.wpcc-analysis-results {
+    margin: 20px 0;
+}
+
+.wpcc-analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.wpcc-analysis-timestamp {
+    color: #666;
+    font-style: italic;
+    margin-bottom: 15px;
+}
+
+.wpcc-analysis-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.wpcc-analysis-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.wpcc-analysis-section h4 {
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    color: #1d2327;
+}
+
+.wpcc-suggestions li {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.wpcc-suggestions li:before {
+    content: '💡';
+    position: absolute;
+    left: 0;
+}
+
+.wpcc-metadata {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px;
+    align-items: baseline;
+}
+
+.wpcc-metadata dt {
+    font-weight: bold;
+    color: #1d2327;
+}
+
+.wpcc-metadata dd {
+    margin: 0;
+    padding: 5px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.wpcc-no-analysis {
+    text-align: center;
+    padding: 30px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    color: #666;
+}
+
+.wpcc-analysis-loading {
+    text-align: center;
+    padding: 20px;
+}
+
+/* List table styles */
+.wpcc-analysis-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.wpcc-analysis-status.analyzed {
+    background: #edfaef;
+    color: #0a6b1d;
+}
+
+.wpcc-analysis-status.analyzed:before {
+    content: '✓';
+    margin-right: 4px;
+}
+
+.wpcc-analysis-status.not-analyzed {
+    background: #f8f9fa;
+    color: #666;
+}
+
+/* Loading animation */
+.wpcc-analysis-loading .spinner {
+    float: none;
+    margin: 0 10px 0 0;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 782px) {
+    .wpcc-analysis-sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .wpcc-metadata {
+        grid-template-columns: 1fr;
+    }
+    
+    .wpcc-metadata dt {
+        padding-top: 10px;
+    }
+}
